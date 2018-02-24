@@ -1,0 +1,9 @@
+---
+  - name: Setup security
+    hosts: all
+    become: no
+    gather_facts: False
+    vars_files:
+      - vars_aws.yml
+    roles:
+    - {role: aws-security}

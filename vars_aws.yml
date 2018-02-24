@@ -1,0 +1,5 @@
+---
+  instance_type: t2.micro
+  key_name: "id_rsa_aws_proxy"
+  image: "ami-845aa4e6"
+  region: "ap-southeast-2"

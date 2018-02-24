@@ -1,0 +1,10 @@
+---
+  - name: Create instances
+    hosts: all
+    become: no
+    gather_facts: yes
+    vars_files:
+      - vars_infrastructure.yml
+      - vars_aws.yml
+    roles:
+    - {role: aws-facts}

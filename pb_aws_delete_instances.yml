@@ -1,0 +1,31 @@
+---
+  - name: Create instances ec2
+    hosts: local
+    gather_facts: no
+    tasks:
+    - name: Assure pip and boto3 is installed
+      apt:
+        name: python-pip
+        state: present
+      become: yes
+    - name: Install boto
+      pip:
+        name: boto
+        state: present
+      become: yes
+    - name: Collect all instances with tag Demo
+      ec2_instance_facts:
+        region: "ap-southeast-2"
+        filters:
+          "tag:deployment_name": Prod
+      register: demo_instances
+    - name: Show returened values
+      debug:
+        msg: "Selected hosts are: {{ demo_instances }}"
+    - name: Delete hosts
+      ec2:
+        region: "ap-southeast-2"
+        state: absent
+        instance_ids: "{{ item.instance_id }}"
+      with_items: "{{ demo_instances.instances }}"
+

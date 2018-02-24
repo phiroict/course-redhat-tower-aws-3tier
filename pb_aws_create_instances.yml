@@ -1,0 +1,10 @@
+---
+  - name: install hosts
+    hosts: localhost
+    become: yes
+    vars_files:
+      - vars_infrastructure.yml
+      - vars_aws.yml
+    roles:
+      - {role: aws-create-instances, become: False}
+

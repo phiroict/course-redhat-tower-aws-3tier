@@ -1,0 +1,28 @@
+---
+  - name: Create instances ec2
+    hosts: local
+    gather_facts: no
+    tasks:
+    - name: Assure pip and boto3 is installed
+      apt:
+        name: python-pip
+        state: present
+      become: yes
+    - name: Install boto
+      pip:
+        name: boto
+        state: present
+      become: yes
+    - name: Create hosts
+      ec2:
+        group: default
+        instance_type: t2.micro
+        key_name: "id_rsa_aws_proxy"
+        image: "ami-845aa4e6"
+        wait: true
+        exact_count: 5
+        region: "ap-southeast-2"
+        count_tag:
+          Name: Demo
+        instance_tags:
+          Name: Demo
