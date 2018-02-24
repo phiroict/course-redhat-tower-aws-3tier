@@ -1,177 +1,149 @@
 ---
-#  - name: Create VPC
-#    ec2_vpc:
-#      state: present
-#      cidr_block: "10.10.10.0/24"
-#      region: "{{ region }}"
-#      resource_tags: '{"Environment":"QA", "Name":"Lab_VPC"}'
-#      subnets:
-#      - cidr: "10.10.10.1/25"
-#        resource_tags: { "Environment":"Prod", "Tier" : "App" }
-#      - cidr: "10.10.10.128/25"
-#        resource_tags: { "Environment":"Prod", "Tier" : "Admin" }
-#      internet_gateway: True
-#      route_tables:
-#      - subnets:
-#        - 10.10.10.1/25
-#        routes:
-#        - dest: "0.0.0.0/0"
-#          gw: "192.168.0.0"
-#        - dest: "192.168.0.0/24"
-#          gw: "192.168.0.0"
-#      - subnets:
-#        - 10.10.10.128/25
-#        routes:
-#        - dest: "0.0.0.0/0"
-#          gw: "10.10.10.0"
-#        - dest: "192.168.0.0/24"
-#          gw: "192.168.0.0"
+  - name: Create VPC
+    ec2_vpc_net:
+      name: LabNet
+      cidr_block: 10.10.10.0/24
+      region: "{{ region }}"
+      tags:
+        Name: RHLabVPC
+        module: ec2_vpc_net
+        group: apps
+    register: vpc
 
-    - name: Create VPC
-      ec2_vpc_net:
-        name: LabNet
-        cidr_block: 10.10.10.0/24
-        region: "{{ region }}"
-        tags:
-          Name: RHLabVPC
-          module: ec2_vpc_net
-          group: apps
-      register: vpc
+  - name: Get data
+    debug:
+     msg: "VPC: {{ vpc.vpc.id }}"
 
-    - name: Get data
-      debug:
-       msg: "VPC: {{ vpc.vpc.id }}"
+  - name: Create subnet for application
+    ec2_vpc_subnet:
+      state: present
+      region: "{{ region }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      cidr: 10.10.10.0/25
+      resource_tags:
+        Name: private
+    register: private
 
-    - name: Create subnet for application
-      ec2_vpc_subnet:
-        state: present
-        region: "{{ region }}"
-        vpc_id: "{{ vpc.vpc.id }}"
-        cidr: 10.10.10.0/25
-        resource_tags:
-          Name: private
-      register: private
+  - name: Create subnet for admin
+    ec2_vpc_subnet:
+      state: present
+      region: "{{ region }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      cidr: 10.10.10.128/25
+      resource_tags:
+        Name: public
+    register: public
 
-    - name: Create subnet for admin
-      ec2_vpc_subnet:
-        state: present
-        region: "{{ region }}"
-        vpc_id: "{{ vpc.vpc.id }}"
-        cidr: 10.10.10.128/25
-        resource_tags:
-          Name: public
-      register: public
+  - name: Create gateway
+    ec2_vpc_igw:
+      region: "{{ region }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+    register: igw
 
-    - name: Create gateway
-      ec2_vpc_igw:
-        region: "{{ region }}"
-        vpc_id: "{{ vpc.vpc.id }}"
-        state: present
-      register: igw
+  - name: Get gateway id
+    debug:
+      msg: "Gateway is {{ igw.gateway_id }}"
 
-    - name: Get gateway id
-      debug:
-        msg: "Gateway is {{ igw.gateway_id }}"
+  - name: Set up public subnet route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: Public
+      subnets:
+        - "{{ public.subnet.id }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+    register: public_route_table
 
-    - name: Set up public subnet route table
-      ec2_vpc_route_table:
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-        tags:
-          Name: Public
-        subnets:
-          - "{{ public.subnet.id }}"
-        routes:
-          - dest: 0.0.0.0/0
-            gateway_id: "{{ igw.gateway_id }}"
-      register: public_route_table
+  - name: Routing table id is
+    debug:
+      msg: "Public routing is {{ public_route_table }}"
 
-    - name: Routing table id is
-      debug:
-        msg: "Public routing is {{ public_route_table }}"
+  - name: Route admin to apps
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: Internal
+      subnets:
+        - "{{ public.subnet.id }}"
+      routes:
+        - dest: 10.10.10.0/25
+          instance_id: "{{ private.subnet.id }}"
+    register: admin_route
+  - name: Routing admin table id is
+    debug:
+      msg: "Public routing is {{ admin_route }}"
 
-    - name: Route admin to apps
-      ec2_vpc_route_table:
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-        tags:
-          Name: Internal
-        subnets:
-          - "{{ public.subnet.id }}"
-        routes:
-          - dest: 10.10.10.0/25
-            instance_id: "{{ private.subnet.id }}"
-      register: admin_route
-    - name: Routing admin table id is
-      debug:
-        msg: "Public routing is {{ admin_route }}"
+  - name: app security
+    ec2_group:
+      name: app_security
+      description: Access rules for the application.
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: LabSecGroup-App
+      rules:
+        - proto: tcp
+          from_port: 8080
+          to_port: 8080
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
 
-    - name: app security
-      ec2_group:
-        name: app_security
-        description: Access rules for the application.
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-        tags:
-          Name: LabSecGroup-App
-        rules:
-          - proto: tcp
-            from_port: 8080
-            to_port: 8080
-            cidr_ip: 0.0.0.0/0
-          - proto: tcp
-            from_port: 22
-            to_port: 22
-            cidr_ip: 0.0.0.0/0
+  - name: frontend security
+    ec2_group:
+      name: frontend_servers
+      description: Access rules for the application.
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: LabSecGroup-Frontend
+      rules:
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 443
+          to_port: 443
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
 
-    - name: frontend security
-      ec2_group:
-        name: frontend_servers
-        description: Access rules for the application.
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-        tags:
-          Name: LabSecGroup-Frontend
-        rules:
-          - proto: tcp
-            from_port: 80
-            to_port: 80
-            cidr_ip: 0.0.0.0/0
-          - proto: tcp
-            from_port: 443
-            to_port: 443
-            cidr_ip: 0.0.0.0/0
-          - proto: tcp
-            from_port: 22
-            to_port: 22
-            cidr_ip: 0.0.0.0/0
+  - name: database security
+    ec2_group:
+      name: db_servers
+      description: Access rules for the application.
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: LabSecGroup-Database
+      rules:
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 5432
+          to_port: 5432
+          cidr_ip: 10.10.10.0/24
 
-    - name: database security
-      ec2_group:
-        name: db_servers
-        description: Access rules for the application.
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-        tags:
-          Name: LabSecGroup-Database
-        rules:
-          - proto: tcp
-            from_port: 22
-            to_port: 22
-            cidr_ip: 0.0.0.0/0
-          - proto: tcp
-            from_port: 5432
-            to_port: 5432
-            cidr_ip: 10.10.10.0/24
-
-    - name: Remove global security
-      ec2_group:
-        name: "{{ item }}"
-        state: absent
-        vpc_id: "{{ vpc.vpc.id }}"
-        region: "{{ region }}"
-      with_items:
-       - lab-security
-       - lab-security-app
-       - lab-security-frontend
-       - lab-security-database
+  - name: Remove global security
+    ec2_group:
+      name: "{{ item }}"
+      state: absent
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+    with_items:
+     - lab-security
+     - lab-security-app
+     - lab-security-frontend
+     - lab-security-database
