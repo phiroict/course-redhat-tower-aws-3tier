@@ -6,7 +6,7 @@ Install boto
 sudo pip install boto3
 
 ```
-Moved that to a ansible job. 
+Moved that to an ansible job. 
 
 # AWS 
 * Create Infra structure: course-redhat-tower-aws-3tier/cmdCreateInfra.sh

@@ -1,0 +1,42 @@
+---
+  - name: Provision jumphost
+    hosts: jumpbox
+    become: yes
+    tasks:
+      - name: Install ansible
+        yum:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - ansible
+          - python-pip
+      - name: Install boto
+        pip:
+          name: boto
+          state: present
+      - name: Install private key to connect to other hosts
+        copy:
+          src: ~/.ssh/id_rsa_aws_proxy
+          dest: /home/centos/.ssh/id_rsa_aws_proxy
+          mode: 0400
+          owner: centos
+          group: centos
+      - name: create aws folder
+        file:
+          path: /home/centos/.aws
+          state: directory
+          owner: centos
+          group: centos
+      - name: copy over credentials
+        copy:
+          src: ~/.aws/set-env.sh
+          dest: /home/centos/.aws/set-env.sh
+          owner: centos
+          group: centos
+          mode: 0400
+      - name: Update bashrc
+        lineinfile:
+          line: "source /home/centos/.aws/set-env.sh"
+          path: /home/centos/.bashrc
+
+

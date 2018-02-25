@@ -4,10 +4,15 @@
       region: "{{ region }}"
       filters:
         "tag:Group": apps
+        instance-state-name: running
     register: app_instances
   - name: Show returened values for apps
     debug:
       msg: "Selected app hosts are: {{ app_instances }}"
+
+  - name: Debug
+    debug:
+      msg: "Value : {{ app_instances.instances.0.private_ip_address }}"
 
   - name: Add host
     add_host:
@@ -22,6 +27,7 @@
       region: "{{ region }}"
       filters:
         "tag:Group": frontends
+        instance-state-name: running
     register: fe_instances
   - name: Show returened values for frontend
     debug:
@@ -41,6 +47,7 @@
       region: "{{ region }}"
       filters:
         "tag:Group": appdbs
+        instance-state-name: running
     register: appdb_instances
   - name: Show returened values for databases
     debug:

@@ -10,3 +10,5 @@
     db_servers:
       - { port: '5432', ip_prefix: '20.20.20.0/24' }
       - { port: '22', ip_prefix: '0.0.0.0/0' }
+    jump_host:
+      - { port: '22', ip_prefix: '0.0.0.0/0' }

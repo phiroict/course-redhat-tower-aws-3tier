@@ -1,0 +1,2 @@
+[jumpbox]
+workstation ansible_ssh_host=52.64.3.131 ansible_ssh_user=centos ansible_ssh_private_key_file=~/.ssh/id_rsa_aws_proxy

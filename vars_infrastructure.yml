@@ -61,3 +61,19 @@
         - "80/tcp"
         - "22/tcp"
         - "icmp"
+    jump_host:
+      metadata:
+        group: jump
+        deployment_name: Prod
+      flavor: m2.small
+      keypair: id_rsa_aws_proxy
+      networks:
+        public: 10.10.10.128/24
+        private: 20.20.20.0/24
+      image: rhel-guest
+      security_groups: "jump_host"
+      ports_open:
+        - "22/tcp"
+        - "icmp"
+
+

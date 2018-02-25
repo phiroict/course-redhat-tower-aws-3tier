@@ -9,6 +9,7 @@
       name: boto
       state: present
     become: yes
+
   - name: Get subnet to attach to
     ec2_vpc_subnet_facts:
       region: "{{ region }}"
@@ -16,11 +17,24 @@
         "tag:Name": "private"
     register: private_subnet
 
-  - name: subnet collected
-    debug:
-      msg: "Subnet is {{ private_subnet.subnets[0].id }}"
+  - name: Get subnet to attach to
+    ec2_vpc_subnet_facts:
+      region: "{{ region }}"
+      filters:
+        "tag:Name": "public"
+    register: public_subnet
 
-  - name: Create hosts
+  - name: subnet collected private
+    debug:
+      msg: "Private Subnet is {{ private_subnet.subnets[0].id }}"
+
+  - name: subnet collected public
+    debug:
+      msg: "Public Subnet is {{ public_subnet.subnets[0].id }}"
+
+
+
+  - name: Create hosts in private subnet
     ec2:
       group: "{{ item.value.security_groups }}"
       instance_type: t2.micro
@@ -36,4 +50,34 @@
         Name: "Lab-{{ item.key }}"
         Group: "{{ item.value.metadata.group }}"
         deployment_name: "{{ item.value.metadata.deployment_name }}"
+    when: item.key != 'jump_host'
     with_dict: "{{ infrastructure }}"
+
+  - name: Create hosts in public subnet
+    ec2:
+      group: "{{ item.value.security_groups }}"
+      instance_type: t2.micro
+      key_name: "{{ item.value.keypair }}"
+      image: "{{ image }}"
+      wait: true
+      exact_count: 1
+      vpc_subnet_id: "{{ public_subnet.subnets[0].id }}"
+      region: "{{ region }}"
+      count_tag:
+        Name: Lab
+      instance_tags:
+        Name: "Lab-{{ item.key }}"
+        Group: "{{ item.value.metadata.group }}"
+        deployment_name: "{{ item.value.metadata.deployment_name }}"
+    when: item.key == 'jump_host'
+    with_dict: "{{ infrastructure }}"
+    register: jump_host_instance
+
+  - name: Settings from instance
+    debug:
+      msg: "Jumphost instance: {{ jump_host_instance.results.0.instances.0.id }} "
+
+  - name: Assign public address to instance
+    ec2_eip:
+      region: "{{ region }}"
+      device_id: "{{ jump_host_instance.results.0.instances.0.id }}"

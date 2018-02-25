@@ -50,7 +50,7 @@
       vpc_id: "{{ vpc.vpc.id }}"
       region: "{{ region }}"
       tags:
-        Name: Public
+        Name: Public_subroute
       subnets:
         - "{{ public.subnet.id }}"
       routes:
@@ -67,12 +67,14 @@
       vpc_id: "{{ vpc.vpc.id }}"
       region: "{{ region }}"
       tags:
-        Name: Internal
+        Name: Internal_route_table
       subnets:
-        - "{{ public.subnet.id }}"
+        - "{{ private.subnet.id }}"
       routes:
         - dest: 10.10.10.0/25
-          instance_id: "{{ private.subnet.id }}"
+          instance_id: "{{ public.subnet.id }}"
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
     register: admin_route
   - name: Routing admin table id is
     debug:
@@ -135,6 +137,20 @@
           from_port: 5432
           to_port: 5432
           cidr_ip: 10.10.10.0/24
+
+  - name: jumphost security
+    ec2_group:
+      name: jump_host
+      description: Access rules for the application.
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: LabSecGroup-Jumphost
+      rules:
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
 
   - name: Remove global security
     ec2_group:
