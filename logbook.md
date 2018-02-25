@@ -20,6 +20,29 @@ Moved that to an ansible job.
 
 Current state is that the infra is created and we just delete and remake the hosts as these costs money.
 
+# Setup commandline
+
+Set the AWS variables to connect to the correct account. 
+The:
+```text
+vars_aws.yml
+```
+Contain the non-secret settings:
+```yaml
+
+---
+  instance_type: t2.micro
+  key_name: "id_rsa_aws_proxy"
+  image: "ami-845aa4e6"
+  region: "ap-southeast-2"
+```
+The image is a centos7 image.
+
+
+# Setup tower
+
+For now it does not work so not used.
+
 # Todo
 * Attach public interface to the hosts to do the deployment.
 * Do the deployment to have a MVP 

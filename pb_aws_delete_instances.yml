@@ -1,31 +1,38 @@
 ---
   - name: Create instances ec2
-    hosts: local
+    hosts: localhost
     gather_facts: no
+    vars_files:
+      - vars_aws.yml
     tasks:
     - name: Assure pip and boto3 is installed
       apt:
         name: python-pip
         state: present
       become: yes
-    - name: Install boto
+    - name: Install boto through pip
       pip:
         name: boto
         state: present
       become: yes
-    - name: Collect all instances with tag Demo
+    - name: Collect all instances with tag Prod, needs to set the access key as the module does not pick it up itself
       ec2_instance_facts:
-        region: "ap-southeast-2"
+        region: "{{ region }}"
+        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
         filters:
           "tag:deployment_name": Prod
+          instance-state-name: running
       register: demo_instances
     - name: Show returened values
       debug:
         msg: "Selected hosts are: {{ demo_instances }}"
     - name: Delete hosts
       ec2:
-        region: "ap-southeast-2"
+        region: "{{ region }}"
         state: absent
         instance_ids: "{{ item.instance_id }}"
+        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
       with_items: "{{ demo_instances.instances }}"
 

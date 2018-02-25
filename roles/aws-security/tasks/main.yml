@@ -45,6 +45,14 @@
     debug:
       msg: "Gateway is {{ igw.gateway_id }}"
 
+  - name: Create nat gateway for private network
+    ec2_vpc_nat_gateway:
+      state: present
+      subnet_id: "{{ private.subnet.id }}"
+      region: "{{ region }}"
+      if_exist_do_not_create: yes
+    register: new_nat_gateway
+
   - name: Set up public subnet route table
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -74,7 +82,7 @@
         - dest: 10.10.10.0/25
           instance_id: "{{ public.subnet.id }}"
         - dest: 0.0.0.0/0
-          gateway_id: "{{ igw.gateway_id }}"
+          gateway_id: "{{ new_nat_gateway.nat_gateway_id }}"
     register: admin_route
   - name: Routing admin table id is
     debug:
@@ -152,7 +160,7 @@
           to_port: 22
           cidr_ip: 0.0.0.0/0
 
-  - name: Remove global security
+  - name: Remove old global security rules
     ec2_group:
       name: "{{ item }}"
       state: absent

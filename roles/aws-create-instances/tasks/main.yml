@@ -81,3 +81,10 @@
     ec2_eip:
       region: "{{ region }}"
       device_id: "{{ jump_host_instance.results.0.instances.0.id }}"
+      reuse_existing_ip_allowed: yes
+      in_vpc: yes
+    register: eip
+
+  - name: output the IP
+    debug:
+      msg: "Allocated Public IP is {{ eip.public_ip }}"
