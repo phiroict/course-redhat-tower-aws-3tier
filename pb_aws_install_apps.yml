@@ -1,12 +1,12 @@
 ---
-  - hosts: local
+  - hosts: localhost
     gather_facts: true
     become: no
     vars_files:
       - vars_infrastructure.yml
       - vars_aws.yml
     roles:
-    - {role: aws-facts, become: no}
+    - {role: aws-facts, become: False}
 
    # Setup front-end load balancer tier
 
