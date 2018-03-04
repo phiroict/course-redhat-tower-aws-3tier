@@ -11,7 +11,7 @@
 
   - name: setup load-balancer tier
     hosts: frontends
-    become: yes
+    become: no
     roles:
       - {name: app-basic-config, tags: app-basic-config}
       - {name: app-loadbalancer, tags: [lbs, haproxy]}
@@ -20,7 +20,7 @@
 
   - name: setup app tier
     hosts: apps
-    become: yes
+    become: no
     gather_facts: false
     roles:
       - {name: app-basic-config, tags: app-basic-config}
@@ -29,7 +29,7 @@
   # Setup database tier
 
   - name: setup database tier
-    become: yes
+    become: no
     hosts: appdbs
     roles:
       - {name: app-basic-config, tags: app-basic-config}
