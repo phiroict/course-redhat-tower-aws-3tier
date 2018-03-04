@@ -1,14 +1,14 @@
 ---
-  - name: Assure pip and boto3 is installed
-    apt:
-      name: python-pip
-      state: present
-    become: yes
-  - name: Install boto
-    pip:
-      name: boto
-      state: present
-    become: yes
+#  - name: Assure pip and boto3 is installed
+#    apt:
+#      name: python-pip
+#      state: present
+#    become: yes
+#  - name: Install boto
+#    pip:
+#      name: boto
+#      state: present
+#    become: yes
 
   - name: Get subnet to attach to
     ec2_vpc_subnet_facts:
