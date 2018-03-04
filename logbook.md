@@ -6,7 +6,7 @@ Install boto
 sudo pip install boto3
 
 ```
-Moved that to an ansible job. 
+Moved that to an ansible job triggered by an bash script. 
 
 # AWS 
 * Create Infra structure: course-redhat-tower-aws-3tier/cmdCreateInfra.sh
@@ -40,13 +40,57 @@ The image is a centos7 image.
 
 
 # Setup tower
+Created from provision script at: https://github.com/phiroict/course-redhat-tower-os-3tier/tree/master/ansible-tower
+Then the openstack.pem manually overto the location at /var/lib/awx/.ssh/.
+Then created the jobs from the seperate playbooks.
 
-For now it does not work so not used.
+## QA
+This is run from this git repo.
 
-# Todo
-* Attach public interface to the hosts to do the deployment.
-* Do the deployment to have a MVP 
-* After that, create a fifth host that is a jumphost. 
-  * Put that in the public segment.
-* Deploy over the jumphost
-* Then get it to work over ansible tower. 
+### Run once
+* Create networks
+course-redhat-ansible-windows-chapter7/code/provisioning-QA/cmd_create_networks.sh
+(Includes router)
+
+  * Calls: pb_create_network.yml
+
+* Create keypair
+course-redhat-ansible-windows-chapter7/code/provisioning-QA/cmd_create_sshkeys.sh
+  * Calls: pb_sshkeys.yml
+
+* Create flavor
+course-redhat-ansible-windows-chapter7/code/provisioning-QA/cmd_create_flavor.sh
+  * Calls: pb_osp_flavor.yml 
+
+* Create the security groups
+course-redhat-ansible-windows-chapter7/code/provisioning-QA/cmd_create_security.sh
+  * Calls: pb_setup_security.yml
+
+### Run from tower
+* Build instances
+course-redhat-tower-os-3tier/cmd_create_instances.sh 
+  * Calls: pb_create_instances.yml
+  
+* Install apps
+course-redhat-tower-os-3tier/cmd_install_applications.sh ()
+  * Calls: pb_install_apps.yml
+
+* Delete instances
+course-redhat-tower-os-3tier/cmd_delete_instances.sh
+  * Calls: pb_delete_instances.yml
+  
+## Prod
+From github: https://github.com/phiroict/course-redhat-tower-aws-3tier
+
+* Create Infra structure: course-redhat-tower-aws-3tier/cmdCreateInfra.sh (pb_aws_setup_security.yml)
+  * Creates VPC 
+  * Subnets
+  * Create gateway
+  * Creates routes
+  * Create security groups
+* Create instances: course-redhat-tower-aws-3tier/cmdCreateInstances.sh   (pb_aws_create_instances.yml)
+* Delete instances: course-redhat-tower-aws-3tier/cmdDeleteHosts.sh       (pb_aws_delete_instances.yml)
+
+
+
+
