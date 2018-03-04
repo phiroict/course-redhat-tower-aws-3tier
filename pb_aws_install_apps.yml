@@ -1,6 +1,7 @@
 ---
   - hosts: localhost
     gather_facts: true
+    become: no
     vars_files:
       - vars_infrastructure.yml
       - vars_aws.yml
