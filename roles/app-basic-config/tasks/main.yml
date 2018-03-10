@@ -20,3 +20,22 @@
     with_items:
       - httpie
       - python-pip
+
+  - name: Install boto if jump
+    pip:
+      name: boto3
+      state: present
+
+  - name: Create ssh dir
+    file:
+      path: /home/phiro/.ssh
+      state: directory
+      recurse: yes
+      mode: 0744
+
+  - name: Install keys
+    copy:
+      src: /home/phiro/.ssh/id_rsa_aws_proxy
+      dest: /home/phiro/.ssh/id_rsa_aws_proxy
+      owner: centos
+      mode: 0400

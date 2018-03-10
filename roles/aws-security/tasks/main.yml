@@ -45,10 +45,10 @@
     debug:
       msg: "Gateway is {{ igw.gateway_id }}"
 
-  - name: Create nat gateway for private network
+  - name: Create nat gateway for private network internet access, note, this needs to be put in the public network!
     ec2_vpc_nat_gateway:
       state: present
-      subnet_id: "{{ private.subnet.id }}"
+      subnet_id: "{{ public.subnet.id }}"
       region: "{{ region }}"
       if_exist_do_not_create: yes
     register: new_nat_gateway
@@ -66,9 +66,26 @@
           gateway_id: "{{ igw.gateway_id }}"
     register: public_route_table
 
+  - name: Set up private subnet route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ region }}"
+      tags:
+        Name: Private_subroute
+      subnets:
+        - "{{ private.subnet.id }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+    register: private_route_table
+
   - name: Routing table id is
     debug:
       msg: "Public routing is {{ public_route_table }}"
+
+  - name: Routing table id is - private
+    debug:
+      msg: "Private routing is {{ private_route_table }}"
 
   - name: Route admin to apps
     ec2_vpc_route_table:

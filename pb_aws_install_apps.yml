@@ -1,12 +1,16 @@
 ---
-  - hosts: localhost
+  - hosts: jumpbox
     gather_facts: true
     become: no
     vars_files:
       - vars_infrastructure.yml
       - vars_aws.yml
     roles:
+    - {role: app-basic-config, become: True}
     - {role: aws-facts, become: False}
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
    # Setup front-end load balancer tier
 
@@ -16,6 +20,9 @@
     roles:
       - {name: app-basic-config, tags: app-basic-config}
       - {name: app-loadbalancer, tags: [lbs, haproxy]}
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
   # Setup application servers tier
 
@@ -26,6 +33,9 @@
     roles:
       - {name: app-basic-config, tags: app-basic-config}
       - {name: app-apps, tags: [apps, tomcat]}
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
   # Setup database tier
 
@@ -35,3 +45,6 @@
     roles:
       - {name: app-basic-config, tags: app-basic-config}
       - {name: app-appdb, tags: [dbs, postgres]}
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"

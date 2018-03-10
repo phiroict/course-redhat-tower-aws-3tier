@@ -92,5 +92,16 @@ From github: https://github.com/phiroict/course-redhat-tower-aws-3tier
 * Delete instances: course-redhat-tower-aws-3tier/cmdDeleteHosts.sh       (pb_aws_delete_instances.yml)
 
 
+# Logging in to AWS jumphost
+```bash
+ssh -A -i ~/.ssh/id_rsa_aws_proxy centos@<external ip address jumphost>
+```
+You get this ip address from the cmdCreateInstances.sh result logs.
+
+# Configuration of AWS 
+* Set the security groups to allow all outgoing traffic so you can update yum repos. 
+* Allow internal network to connect out by adding a nat gateway to it.
+  * Add a nat gateway _to the public subnet_. (Done in ansible script now)
+  * Adding the nat to the subnet does not work in ansible so add that **manually** to the route table of the private subnet. TODO: Figure out to do this in ansible.
 
 
