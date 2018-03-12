@@ -35,7 +35,7 @@
 
   - name: Install keys
     copy:
-      src: /home/phiro/.ssh/id_rsa_aws_proxy
+      src: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa_aws_proxy"
       dest: /home/phiro/.ssh/id_rsa_aws_proxy
       owner: centos
       mode: 0400

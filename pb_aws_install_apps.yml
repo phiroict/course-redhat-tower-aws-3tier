@@ -1,5 +1,29 @@
 ---
-  - hosts: jumpbox
+  - name: Get the jumphost ip address
+    hosts: local
+    gather_facts: no
+    become: no
+    vars_files:
+      - vars_infrastructure.yml
+      - vars_aws.yml
+    tasks:
+    - name: Collect all instances with tag Apps
+      ec2_instance_facts:
+        region: "{{ region }}"
+        filters:
+          "tag:Group": jump
+          instance-state-name: running
+      register: jumphost_instance
+    - name: Jumphost found
+      debug:
+        msg: "Jumphost found: {{ jumphost_instance }}"
+    - name: Add the jumphost
+      add_host:
+        name: "{{ jumphost_instance.instances.0.public_ip_address }}"
+        group: "dyn_jumpbox"
+        ansible_ssh_private_key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa_aws_proxy.pem"
+        ansible_ssh_user: centos
+  - hosts: dyn_jumpbox
     gather_facts: true
     become: no
     vars_files:
