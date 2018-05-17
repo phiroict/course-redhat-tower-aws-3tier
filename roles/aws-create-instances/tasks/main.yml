@@ -50,6 +50,7 @@
         Name: "Lab-{{ item.key }}"
         Group: "{{ item.value.metadata.group }}"
         deployment_name: "{{ item.value.metadata.deployment_name }}"
+        Owner: "pr1438"
     when: item.key != 'jump_host'
     with_dict: "{{ infrastructure }}"
 
@@ -69,6 +70,7 @@
         Name: "Lab-{{ item.key }}"
         Group: "{{ item.value.metadata.group }}"
         deployment_name: "{{ item.value.metadata.deployment_name }}"
+        Owner: "pr1438"
     when: item.key == 'jump_host'
     with_dict: "{{ infrastructure }}"
     register: jump_host_instance

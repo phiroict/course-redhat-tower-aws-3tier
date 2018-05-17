@@ -8,6 +8,7 @@
         Name: RHLabVPC
         module: ec2_vpc_net
         group: apps
+        Owner: "pr1438"
     register: vpc
 
   - name: Get data
@@ -74,6 +75,7 @@
         Name: Private_subroute
       subnets:
         - "{{ private.subnet.id }}"
+        - "{{ public.subnet.id }}"
       routes:
         - dest: 0.0.0.0/0
           gateway_id: "{{ igw.gateway_id }}"
@@ -96,8 +98,6 @@
       subnets:
         - "{{ private.subnet.id }}"
       routes:
-        - dest: 10.10.10.0/25
-          instance_id: "{{ public.subnet.id }}"
         - dest: 0.0.0.0/0
           gateway_id: "{{ new_nat_gateway.nat_gateway_id }}"
     register: admin_route

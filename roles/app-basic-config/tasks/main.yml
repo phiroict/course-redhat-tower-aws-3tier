@@ -11,6 +11,22 @@
 #      src: repos_template.j2
 #      dest: /etc/yum.repos.d/open_three-tier-app.repo
 #      mode: 0644
+  - name: 1.Check if EPEL repo is already configured.
+    stat: path={{ epel_repofile_path }}
+    register: epel_repofile_result
+
+  - name: 2.Install EPEL repo.
+    yum:
+      name: "{{ epel_repo_url }}"
+      state: present
+    register: result
+    when: not epel_repofile_result.stat.exists
+
+  - name: 3.Import EPEL GPG key.
+    rpm_key:
+      key: "{{ epel_repo_gpg_key_url }}"
+      state: present
+    when: not epel_repofile_result.stat.exists
 
   - name: install base tools and packages
     yum:
@@ -18,7 +34,6 @@
       state: latest
       update_cache: yes
     with_items:
-      - httpie
       - python-pip
 
   - name: Install boto if jump
